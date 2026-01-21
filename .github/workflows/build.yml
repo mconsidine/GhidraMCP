@@ -11,7 +11,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      GHIDRA_INSTALL_DIR: './GhidraMCP'
       GHIDRA_VERSION: '12.0'
       GHIDRA_DATE: 20251205
       GHIDRA_LIBS: >-
@@ -23,86 +22,85 @@ jobs:
         Framework/SoftwareModeling/lib/SoftwareModeling.jar
         Framework/Utility/lib/Utility.jar
         Framework/Gui/lib/Gui.jar
-
+    
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
-  
-    - name: Download Ghidra
-      run: |
-        #https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.0_build/ghidra_12.0_PUBLIC_20251205.zip
-        wget --no-verbose -O ghidra.zip https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${{ env.GHIDRA_VERSION }}_build/ghidra_${{ env.GHIDRA_VERSION }}_PUBLIC_${{ env.GHIDRA_DATE }}.zip
-        7z x -bd ghidra.zip
-        echo "GHIDRA_INSTALL_DIR=${{ github.workspace }}/ghidra_${{ env.GHIDRA_VERSION }}_PUBLIC" >> $GITHUB_ENV
-
-    - name: Copy Ghidra libs
-      run: |
-        mkdir -p ./lib
-        for libfile in ${{ env.GHIDRA_LIBS }}
-          do echo "Copying ${libfile} to lib/"
-          cp ghidra_${{ env.GHIDRA_VERSION }}_PUBLIC/Ghidra/${libfile} ./lib/
-        done
-
-    - name: Build with Gradle
-      run: gradle clean build jar
-
-    - name: Prepare release
-      run: |
-        # Get the version from build.gradle or use a default
-        VERSION=$(grep "^version" build.gradle | sed "s/version *= *['\"]//g" | sed "s/['\"].*//g" || echo "1.0.0")
-        
-        # Get current date in YYYY-MM-DD format
-        CREATED_DATE=$(date +%Y-%m-%d)
-        
-        # Create the inner zip structure
-        mkdir -p temp_inner/lib
-        cp build/libs/*.jar temp_inner/lib/GhidraMCP.jar
-        
-        # Create extension.properties
-        cat > temp_inner/extension.properties << EOF
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+    
+      - name: Download Ghidra
+        run: |
+          wget --no-verbose -O ghidra.zip https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${{ env.GHIDRA_VERSION }}_build/ghidra_${{ env.GHIDRA_VERSION }}_PUBLIC_${{ env.GHIDRA_DATE }}.zip
+          7z x -bd ghidra.zip
+          echo "GHIDRA_INSTALL_DIR=${{ github.workspace }}/ghidra_${{ env.GHIDRA_VERSION }}_PUBLIC" >> $GITHUB_ENV
+      
+      - name: Copy Ghidra libs
+        run: |
+          mkdir -p ./lib
+          for libfile in ${{ env.GHIDRA_LIBS }}
+            do echo "Copying ${libfile} to lib/"
+            cp ghidra_${{ env.GHIDRA_VERSION }}_PUBLIC/Ghidra/${libfile} ./lib/
+          done
+      
+      - name: Build with Gradle
+        run: gradle clean build jar
+      
+      - name: Prepare release
+        run: |
+          # Get the version from build.gradle or use a default
+          VERSION=$(grep "^version" build.gradle | sed "s/version *= *['\"]//g" | sed "s/['\"].*//g" || echo "1.0.0")
+          
+          # Get current date in YYYY-MM-DD format
+          CREATED_DATE=$(date +%Y-%m-%d)
+          
+          # Create the inner zip structure
+          mkdir -p temp_inner/lib
+          cp build/libs/*.jar temp_inner/lib/GhidraMCP.jar
+          
+          # Create extension.properties
+          cat > temp_inner/extension.properties << 'EOF'
 name=GhidraMCP
 description=A plugin that runs an embedded HTTP server to expose program data.
 author=originallyLaurieWired
-createdOn=${CREATED_DATE}
-version=${VERSION}
-ghidraVersion=${{ env.GHIDRA_VERSION }}
+createdOn=CREATED_DATE_PLACEHOLDER
+version=VERSION_PLACEHOLDER
+ghidraVersion=GHIDRA_VERSION_PLACEHOLDER
 EOF
-        
-        # Create Module.manifest
-        cat > temp_inner/Module.manifest << EOF
+          sed -i "s/CREATED_DATE_PLACEHOLDER/${CREATED_DATE}/g" temp_inner/extension.properties
+          sed -i "s/VERSION_PLACEHOLDER/${VERSION}/g" temp_inner/extension.properties
+          sed -i "s/GHIDRA_VERSION_PLACEHOLDER/${{ env.GHIDRA_VERSION }}/g" temp_inner/extension.properties
+          
+          # Create Module.manifest
+          cat > temp_inner/Module.manifest << 'EOF'
 GHIDRA_MODULE_NAME=GhidraMCP
 GHIDRA_MODULE_DESC=An HTTP server plugin for Ghidra
 EOF
-        
-        # Create the inner zip
-        cd temp_inner
-        zip -r ../GhidraMCP_v${VERSION}.zip .
-        cd ..
-        
-        # Create the outer release directory and zip
-        mkdir -p release
-        cp bridge_mcp_ghidra.py release/
-        cp GhidraMCP_v${VERSION}.zip release/
-        cd release
-        zip -r GhidraMCP-${VERSION}.zip bridge_mcp_ghidra.py GhidraMCP_v${VERSION}.zip
-        ls -lha
-        cd ..
-        echo "up one"
-        ls -lha
-        
-        # Clean up temporary directory
-        rm -rf temp_inner
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: GhidraMCP-artifact
-        #path: release/GhidraMCP-*.zip
-        path: release/*
+          
+          # Create the inner zip
+          cd temp_inner
+          zip -r ../GhidraMCP_v${VERSION}.zip .
+          cd ..
+          
+          # Create the outer release directory and zip
+          mkdir -p release
+          cp bridge_mcp_ghidra.py release/
+          cp GhidraMCP_v${VERSION}.zip release/
+          cd release
+          zip -r GhidraMCP-${VERSION}.zip bridge_mcp_ghidra.py GhidraMCP_v${VERSION}.zip
+          cd ..
+          
+          # Clean up temporary directory
+          rm -rf temp_inner
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GhidraMCP-artifact
+          path: release/*
