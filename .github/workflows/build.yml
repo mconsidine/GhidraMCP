@@ -30,8 +30,10 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        cache: maven
 
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+  
     - name: Download Ghidra
       run: |
         #https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.0_build/ghidra_12.0_PUBLIC_20251205.zip
