@@ -101,5 +101,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: GhidraMCP-artifact
-        path: |
-          release/*
+        path: release/GhidraMCP-*.zip
