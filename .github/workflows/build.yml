@@ -92,7 +92,10 @@ jobs:
         cp GhidraMCP_v${VERSION}.zip release/
         cd release
         zip -r GhidraMCP-${VERSION}.zip bridge_mcp_ghidra.py GhidraMCP_v${VERSION}.zip
+        ls -lha
         cd ..
+        echo "up one"
+        ls -lha
         
         # Clean up temporary directory
         rm -rf temp_inner
@@ -101,4 +104,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: GhidraMCP-artifact
-        path: release/GhidraMCP-*.zip
+        #path: release/GhidraMCP-*.zip
+        path: release/*
