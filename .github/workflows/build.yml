@@ -54,49 +54,27 @@ jobs:
       
       - name: Prepare release
         run: |
-          # Get the version from build.gradle or use a default
           VERSION=$(grep "^version" build.gradle | sed "s/version *= *['\"]//g" | sed "s/['\"].*//g" || echo "1.0.0")
-          
-          # Get current date in YYYY-MM-DD format
           CREATED_DATE=$(date +%Y-%m-%d)
-          
-          # Create the inner zip structure
           mkdir -p temp_inner/lib
           cp build/libs/*.jar temp_inner/lib/GhidraMCP.jar
-          
-          # Create extension.properties
-          cat > temp_inner/extension.properties << 'EOF'
-name=GhidraMCP
-description=A plugin that runs an embedded HTTP server to expose program data.
-author=originallyLaurieWired
-createdOn=CREATED_DATE_PLACEHOLDER
-version=VERSION_PLACEHOLDER
-ghidraVersion=GHIDRA_VERSION_PLACEHOLDER
-EOF
-          sed -i "s/CREATED_DATE_PLACEHOLDER/${CREATED_DATE}/g" temp_inner/extension.properties
-          sed -i "s/VERSION_PLACEHOLDER/${VERSION}/g" temp_inner/extension.properties
-          sed -i "s/GHIDRA_VERSION_PLACEHOLDER/${{ env.GHIDRA_VERSION }}/g" temp_inner/extension.properties
-          
-          # Create Module.manifest
-          cat > temp_inner/Module.manifest << 'EOF'
-GHIDRA_MODULE_NAME=GhidraMCP
-GHIDRA_MODULE_DESC=An HTTP server plugin for Ghidra
-EOF
-          
-          # Create the inner zip
+          echo "name=GhidraMCP" > temp_inner/extension.properties
+          echo "description=A plugin that runs an embedded HTTP server to expose program data." >> temp_inner/extension.properties
+          echo "author=originallyLaurieWired" >> temp_inner/extension.properties
+          echo "createdOn=${CREATED_DATE}" >> temp_inner/extension.properties
+          echo "version=${VERSION}" >> temp_inner/extension.properties
+          echo "ghidraVersion=${{ env.GHIDRA_VERSION }}" >> temp_inner/extension.properties
+          echo "GHIDRA_MODULE_NAME=GhidraMCP" > temp_inner/Module.manifest
+          echo "GHIDRA_MODULE_DESC=An HTTP server plugin for Ghidra" >> temp_inner/Module.manifest
           cd temp_inner
           zip -r ../GhidraMCP_v${VERSION}.zip .
           cd ..
-          
-          # Create the outer release directory and zip
           mkdir -p release
           cp bridge_mcp_ghidra.py release/
           cp GhidraMCP_v${VERSION}.zip release/
           cd release
           zip -r GhidraMCP-${VERSION}.zip bridge_mcp_ghidra.py GhidraMCP_v${VERSION}.zip
           cd ..
-          
-          # Clean up temporary directory
           rm -rf temp_inner
       
       - name: Upload artifact
