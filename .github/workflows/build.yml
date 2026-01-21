@@ -32,14 +32,15 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
 
-    - name: Build with Gradle
-      run: gradle clean build jar
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
   
     - name: Download Ghidra
       run: |
         #https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.0_build/ghidra_12.0_PUBLIC_20251205.zip
         wget --no-verbose -O ghidra.zip https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${{ env.GHIDRA_VERSION }}_build/ghidra_${{ env.GHIDRA_VERSION }}_PUBLIC_${{ env.GHIDRA_DATE }}.zip
         7z x -bd ghidra.zip
+        echo "GHIDRA_INSTALL_DIR=${{ github.workspace }}/ghidra_${{ env.GHIDRA_VERSION }}_PUBLIC" >> $GITHUB_ENV
 
     - name: Copy Ghidra libs
       run: |
@@ -50,7 +51,7 @@ jobs:
         done
 
     - name: Build with Gradle
-      run: ./gradlew clean build
+      run: gradle clean build jar
 
     - name: Assemble release directory
       run: |
