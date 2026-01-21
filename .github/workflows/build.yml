@@ -67,19 +67,19 @@ jobs:
         
         # Create extension.properties
         cat > temp_inner/extension.properties << EOF
-          name=GhidraMCP
-          description=A plugin that runs an embedded HTTP server to expose program data.
-          author=originallyLaurieWired
-          createdOn=${CREATED_DATE}
-          version=${VERSION}
-          ghidraVersion=${{ env.GHIDRA_VERSION }}
-          EOF
+name=GhidraMCP
+description=A plugin that runs an embedded HTTP server to expose program data.
+author=originallyLaurieWired
+createdOn=${CREATED_DATE}
+version=${VERSION}
+ghidraVersion=${{ env.GHIDRA_VERSION }}
+EOF
         
         # Create Module.manifest
         cat > temp_inner/Module.manifest << EOF
-          GHIDRA_MODULE_NAME=GhidraMCP
-          GHIDRA_MODULE_DESC=An HTTP server plugin for Ghidra
-          EOF
+GHIDRA_MODULE_NAME=GhidraMCP
+GHIDRA_MODULE_DESC=An HTTP server plugin for Ghidra
+EOF
         
         # Create the inner zip
         cd temp_inner
