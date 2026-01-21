@@ -53,11 +53,16 @@ jobs:
     - name: Build with Gradle
       run: gradle clean build jar
 
-    - name: Assemble release directory
+    - name: Prepare release
       run: |
-        mkdir release
-        cp target/GhidraMCP-*-SNAPSHOT.zip release/
-        cp bridge_mcp_ghidra.py release/
+        mkdir -p release/package
+        cp build/libs/*.jar release/package/
+        cp bridge_mcp_ghidra.py release/package/
+        JAR_FILE=$(ls build/libs/*.jar | head -n 1)
+        VERSION=$(basename "$JAR_FILE" .jar)
+        cd release/package
+        zip -r ../${VERSION}.zip .
+        cd ../..
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
